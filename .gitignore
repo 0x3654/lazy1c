@@ -1,0 +1,29 @@
+# Бинарники в корне (сборка в контейнере, см. Makefile); исходники в cmd/ — в гите
+/lazy1c
+/lazy1c-linux
+/lazy1c.exe
+/mmmspy
+/dump82
+
+# Дампы реверса: тяжёлые логи шпиона, кадры, захваты (методика — в README)
+research/*.log
+research/*.pcapng
+research/spy*-frames/
+research/mmmspy.log
+
+# Артефакты релиза/времянки
+dist/
+*.tmp
+*.bak
+
+# macOS
+.DS_Store
+
+# Локальные эксперименты (не для публикации)
+*.local.toml
+
+# Локальный конфиг (рабочие адреса/креды) и личные обёртки/планировщик
+lazy1c.toml
+rac83
+rac85
+.todo

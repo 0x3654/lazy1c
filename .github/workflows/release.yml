@@ -1,0 +1,60 @@
+name: release
+
+"on":
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    # linux-раннер — только среда сборки: pure-Go кросс-компиляция собирает
+    # бинарники под все платформы (darwin/linux/windows); нативные macOS-раннеры
+    # нужны лишь для Swift/.app/dmg-проектов
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27"
+
+      - name: Build binaries (pure Go, cross-compile)
+        run: |
+          mkdir -p dist
+          CGO_ENABLED=0 go build -trimpath -o dist/lazy1c_darwin_arm64  .
+          CGO_ENABLED=0 GOARCH=amd64 go build -trimpath -o dist/lazy1c_darwin_amd64  .
+          CGO_ENABLED=0 GOOS=linux   go build -trimpath -o dist/lazy1c_linux_amd64   .
+          CGO_ENABLED=0 GOOS=linux   GOARCH=arm64 go build -trimpath -o dist/lazy1c_linux_arm64 .
+          CGO_ENABLED=0 GOOS=windows go build -trimpath -o dist/lazy1c_windows_amd64.exe .
+
+      - name: Checksums
+        run: |
+          cd dist && sha256sum * > sha256-checksums.txt
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          body: |
+            ## What's inside
+
+            Terminal UI for 1C:Enterprise cluster administration (8.2 / 8.3 / 8.5).
+            Static binaries for macOS (arm64/amd64), Linux (amd64/arm64) and
+            Windows (amd64); checksums in `sha256-checksums.txt`.
+
+            ## Install
+
+            Download a binary for your platform, check the checksum, put it on
+            your `PATH`. Copy `lazy1c.example.toml` to `lazy1c.toml` and
+            describe your clusters.

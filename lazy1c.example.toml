@@ -1,0 +1,23 @@
+# lazy1c configuration. Copy to lazy1c.toml (or ~/.config/lazy1c/lazy1c.toml)
+# and adjust. One [[cluster]] per administration endpoint.
+
+refresh_interval = 5   # seconds between polls
+command_timeout  = 10  # seconds per request
+confirm_on_quit  = false
+
+[theme]
+# Base ANSI slots (0-15): follows the terminal palette (like lazydocker).
+border_active   = "2"
+border_inactive = ""
+selected_bg     = "4"
+selected_fg     = "0"
+hints           = "4"
+
+[[cluster]]
+name    = "local 8.3"
+address = "localhost:1545"   # RAS port; engine=auto falls back to MMC :1540
+
+[[cluster]]
+name    = "legacy 8.2"
+address = "8.2-server:1540"  # ragent port (8.2 has no RAS)
+engine  = "82"
