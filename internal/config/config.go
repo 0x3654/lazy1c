@@ -9,6 +9,43 @@ import (
 	toml "github.com/pelletier/go-toml/v2"
 )
 
+
+// DefaultTOML — шаблон конфига, создаваемого при первом запуске без файла
+// (синхронизировать с lazy1c.example.toml).
+const DefaultTOML = `# lazy1c configuration. One [[cluster]] per administration endpoint.
+# Docs: https://github.com/0x3654/lazy1c#configuration
+
+refresh_interval = 5   # seconds between polls
+command_timeout  = 10  # seconds per request
+confirm_on_quit  = false
+
+[theme]
+# Base ANSI slots (0-15): follows the terminal palette (like lazydocker).
+border_active   = "2"
+border_inactive = ""
+selected_bg     = "4"
+selected_fg     = "0"
+hints           = "4"
+
+[[cluster]]
+name    = "my cluster"
+address = "ras01.example.com:1545"   # RAS port (8.3/8.5); engine=auto falls back to MMC :1540
+
+# [[cluster]]
+# name    = "legacy 8.2"
+# address = "8.2-server:1540"        # ragent port (8.2 has no RAS)
+# engine  = "82"
+`
+
+// WriteDefault записывает шаблон конфига по пути path (не перезаписывает
+// существующий). Вызывается при первом запуске, когда конфиг не найден.
+func WriteDefault(path string) error {
+	if _, err := os.Stat(path); err == nil {
+		return nil // уже есть — не трогаем
+	}
+	return os.WriteFile(path, []byte(DefaultTOML), 0o644)
+}
+
 // Cluster — один RAS-эндпоинт (обычно один сервер 1С с одним кластером).
 type Cluster struct {
 	Name    string `toml:"name"`

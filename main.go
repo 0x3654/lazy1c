@@ -119,7 +119,21 @@ func main() {
 
 	cfg, err := config.Load(*configPath)
 	if err != nil {
-		log.Fatalf("%v\n\nПодсказка: lazy1c init найдёт 1С-серверы в docker и создаст конфиг", err)
+		// первый запуск: конфига нет — создаём шаблон рядом и продолжаем
+		// с пустым списком (кластер добавляется клавишей + в TUI)
+		if strings.Contains(err.Error(), "конфиг не найден") {
+			p := *configPath
+			if p == "" {
+				p = "lazy1c.toml"
+			}
+			if werr := config.WriteDefault(p); werr == nil {
+				fmt.Printf("конфиг не найден — создан шаблон %s: впишите кластер или добавьте клавишей + в TUI\n\n", p)
+				cfg, err = config.Load(p)
+			}
+		}
+		if err != nil {
+			log.Fatalf("%v\n\nПодсказка: lazy1c init найдёт 1С-серверы в docker и создаст конфиг", err)
+		}
 	}
 	if *readOnly {
 		cfg.ReadOnly = true
