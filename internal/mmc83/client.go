@@ -434,8 +434,8 @@ func parseSessions(d []byte) []Session {
 		for j := k + 3; j < len(toks) && j <= k+8 && toks[j].kind == "str"; j++ {
 			ss = append(ss, toks[j].val)
 		}
-		if len(ss) < 3 {
-			continue
+		if len(ss) < 2 {
+			continue // меньше двух строк (host + приложение) — не запись
 		}
 		// приложение ищем по всем строкам после хоста: у сеанса с пустым
 		// юзером (экран логина) строка приложения идёт сразу за хостом

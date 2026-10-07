@@ -191,8 +191,8 @@ func TestHideJobs(t *testing.T) {
 	if strings.Contains(v, "⚙2") {
 		t.Error("счётчик кластера не должен считать скрытые регламентные (⚙1)")
 	}
-	if !strings.Contains(v, "⚙1") {
-		t.Errorf("бейдж базы ⚙ должен остаться: %s", firstLines(v))
+	if strings.Contains(v, "⚙1") {
+		t.Errorf("счётчик базы не должен считать скрытые регламентные: %s", firstLines(v))
 	}
 
 	m.settings.HideJobs = false

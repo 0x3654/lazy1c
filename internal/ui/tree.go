@@ -45,7 +45,7 @@ func isServiceSession(appID string) bool {
 // sessionShown — видимость сеанса везде (дерево, zoom, счётчики):
 // настройки категорий + спящие + регламентные. Текстовый фильтр тут ни при чём.
 func (m *model) sessionShown(s *serializev1.SessionInfo) bool {
-	if m.sessionHidden(s.GetAppId()) {
+	if m.sessionHidden(s.GetAppId(), s.GetUserName()) {
 		return false
 	}
 	if isServiceSession(s.GetAppId()) && m.settings.HideRAS {
@@ -142,8 +142,9 @@ func (m *model) countUsersJobs(sessions []*serializev1.SessionInfo, infobaseID s
 		if s.GetInfobaseId() != infobaseID {
 			continue
 		}
-		if m.sessionHidden(s.GetAppId()) ||
-			(isServiceSession(s.GetAppId()) && m.settings.HideRAS) {
+		if m.sessionHidden(s.GetAppId(), s.GetUserName()) ||
+			(isServiceSession(s.GetAppId()) && m.settings.HideRAS) ||
+			(m.settings.HideJobs && isJobSession(s.GetAppId())) {
 			continue
 		}
 		if isJobSession(s.GetAppId()) {

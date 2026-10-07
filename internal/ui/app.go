@@ -40,6 +40,47 @@ type clusterState struct {
 	ibOpen           map[string]bool
 }
 
+// buildClusterStates — начальный список кластеров: конфиг + добавленные из UI,
+// минус убранные (D/Delete); пауза (s) переживает перезапуск — адреса
+// из paused_clusters стартуют с enabled=false.
+func buildClusterStates(cfg *config.Config, st Settings, timeout time.Duration) []clusterState {
+	var out []clusterState
+	for _, c := range cfg.Clusters {
+		if st.isRemovedCluster(c.Address) {
+			continue
+		}
+		out = append(out, clusterState{
+			id: c.Name, address: c.Address,
+			creds:   ras.Creds{User: c.User, Pwd: c.Pwd},
+			ibCreds: ras.Creds{User: c.IbUser, Pwd: c.IbPwd},
+			conn:    engine.New(c.Address, timeout, c.Engine),
+			enabled: !st.isPausedCluster(c.Address), expanded: false, firstSnap: true, ibOpen: map[string]bool{},
+		})
+	}
+	for _, ec := range st.Clusters { // добавленные из UI (+)
+		dup := false
+		for i := range out {
+			if out[i].address == ec.Address {
+				dup = true
+				break
+			}
+		}
+		if dup {
+			continue
+		}
+		name := ec.Name
+		if name == "" {
+			name = ec.Address
+		}
+		out = append(out, clusterState{
+			id: name, address: ec.Address,
+			conn:    engine.New(ec.Address, timeout, "auto"),
+			enabled: !st.isPausedCluster(ec.Address), expanded: false, firstSnap: true, ibOpen: map[string]bool{},
+		})
+	}
+	return out
+}
+
 // msg-типы bubbletea.
 type tickMsg struct{}
 
@@ -144,40 +185,7 @@ func Run(ctx context.Context, cfg *config.Config) error {
 	m := &model{cfg: cfg, ibInfo: map[string]*ibEntry{}, settings: loadSettings(),
 		formDismissed: map[string]bool{}, pendingKills: map[string]string{}, marked: map[string]string{}}
 	timeout := time.Duration(cfg.CommandTimeout) * time.Second
-	for _, c := range cfg.Clusters {
-		if m.settings.isRemovedCluster(c.Address) {
-			continue // убран пользователем через D/Delete
-		}
-		m.state = append(m.state, clusterState{
-			id: c.Name, address: c.Address,
-			creds:   ras.Creds{User: c.User, Pwd: c.Pwd},
-			ibCreds: ras.Creds{User: c.IbUser, Pwd: c.IbPwd},
-			conn:    engine.New(c.Address, timeout, c.Engine),
-			enabled: true, expanded: false, firstSnap: true, ibOpen: map[string]bool{},
-		})
-	}
-	// кластеры, добавленные из UI (+), — из settings.toml
-	for _, ec := range m.settings.Clusters {
-		dup := false
-		for i := range m.state {
-			if m.state[i].address == ec.Address {
-				dup = true
-				break
-			}
-		}
-		if dup {
-			continue
-		}
-		name := ec.Name
-		if name == "" {
-			name = ec.Address
-		}
-		m.state = append(m.state, clusterState{
-			id: name, address: ec.Address,
-			conn:    engine.New(ec.Address, timeout, "auto"),
-			enabled: true, expanded: false, firstSnap: true, ibOpen: map[string]bool{},
-		})
-	}
+	m.state = buildClusterStates(cfg, m.settings, timeout)
 	m.applyTreeState() // дерево открывается как было закрыто в прошлый раз
 	m.log = append(m.log, "старт: "+fmt.Sprintf("%d кластер(ов)", len(m.state)))
 	p := tea.NewProgram(m, tea.WithContext(ctx))

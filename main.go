@@ -97,6 +97,10 @@ func initConfig() {
 	fmt.Println("\nзаписан lazy1c.toml — запускайте lazy1c")
 }
 
+// version — прошивается ldflags-ами при сборке релиза
+// (-X main.version=vX.Y.Z из тега), локально — dev.
+var version = "dev"
+
 func main() {
 	configPath := flag.String("config", "", "путь к lazy1c.toml")
 	readOnly := flag.Bool("read-only", false, "только просмотр: запретить любые изменения")
@@ -108,7 +112,7 @@ func main() {
 	flag.Parse()
 
 	if flag.Arg(0) == "version" {
-		fmt.Println("lazy1c dev")
+		fmt.Println("lazy1c", version)
 		return
 	}
 

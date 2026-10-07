@@ -309,7 +309,7 @@ func (m *model) menuEntries(kind string, tab int) []menuEntry {
 		{label: "settings"}, // заголовок секции
 		{label: "Показывать РЗ/Вход у баз в дереве (v)", val: &m.settings.ShowFlags},
 		{label: "Скрывать RAS-сеансы", val: &m.settings.HideRAS},
-		{label: "Скрывать сеансы консоли (1CV8)", val: &m.settings.HideConsole},
+		{label: "Скрывать сеансы консоли (MMC)", val: &m.settings.HideConsole},
 		{label: "Скрывать сеансы конфигуратора", val: &m.settings.HideDesigner},
 		{label: "Скрывать спящие сеансы (z)", val: &m.settings.HideIdle},
 		{label: "Скрывать регламентные задания", val: &m.settings.HideJobs},
@@ -392,9 +392,12 @@ func (m *model) selectableEntries(kind string, tab int) []int {
 }
 
 // sessionHidden — скрыт ли сеанс настройками видимости категорий.
-func (m *model) sessionHidden(appID string) bool {
+func (m *model) sessionHidden(appID, userName string) bool {
 	switch appID {
-	case "1CV8", "SrvrConsole": // толстый клиент и сеансы MMC-консоли — одна категория
+	case "SrvrConsole":
+		// консоль = MMC-консоль (сеансы самой оснастки). Клиентские сеансы
+		// (толстый/тонкий, даже безымянные — это Предприятие, запущенное
+		// скриптом) не прячем никогда; конфигуратор — отдельная категория.
 		return m.settings.HideConsole
 	case "Designer":
 		return m.settings.HideDesigner

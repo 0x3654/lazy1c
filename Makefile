@@ -19,10 +19,12 @@ fmt: ## проверка форматирования (gofmt -l должен б�
 tidy:
 	$(RUN) go mod tidy
 
+VER ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+
 build: ## бинарник под текущий мак (кросс-компиляция из linux-контейнера)
 	docker run --rm -v "$(CURDIR)":/src -w /src -v $(MOD_VOL):/go/pkg/mod -v $(CACHE_VOL):/root/.cache/go-build \
 		-e GOOS=darwin -e GOARCH=arm64 -e CGO_ENABLED=0 $(GO_IMAGE) \
-		go build -trimpath -o lazy1c .
+		go build -trimpath -ldflags "-X main.version=$(VER)" -o lazy1c .
 
 build-linux: ## бинарник под linux/amd64 (сервера)
 	docker run --rm -v "$(CURDIR)":/src -w /src -v $(MOD_VOL):/go/pkg/mod -v $(CACHE_VOL):/root/.cache/go-build \
